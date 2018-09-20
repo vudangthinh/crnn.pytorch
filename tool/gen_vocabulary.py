@@ -11,6 +11,6 @@ char_set = set()
 for key, value in json_data.items():
     char_set = set.union(char_set, set(value))
 
-with open('./data/vocabulary.txt', 'w') as writer:
+with open('../data/vocabulary.txt', 'w') as writer:
     for char in sorted(char_set):
         writer.write(char)

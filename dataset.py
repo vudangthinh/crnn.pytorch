@@ -127,7 +127,7 @@ class alignCollate(object):
             ratios.sort()
             max_ratio = ratios[-1]
             imgW = int(np.floor(max_ratio * imgH))
-            imgW = max(imgH * self.min_ratio, imgW)  # assure imgH >= imgW
+            imgW = max(imgH * self.min_ratio, imgW)  # assure imgH <= imgW
 
         transform = resizeNormalize((imgW, imgH))
         images = [transform(image) for image in images]

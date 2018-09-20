@@ -19,13 +19,12 @@ import models.crnn as crnn
 parser = argparse.ArgumentParser()
 parser.add_argument('--trainRoot', default='./data', help='path to dataset')
 parser.add_argument('--valRoot', default='./data', help='path to dataset')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
+parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--imgW', type=int, default=576, help='the width of the input image to network')
 parser.add_argument('--hidden_size', type=int, default=256, help='size of the lstm hidden state')
 parser.add_argument('--nepoch', type=int, default=25, help='number of epochs to train for')
-# TODO(meijieru): epoch -> iter
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use')
 parser.add_argument('--pretrained', default='', help="path to pretrained model (to continue training)")
@@ -62,13 +61,14 @@ if torch.cuda.is_available():
 
 train_dataset = dataset.lmdbDataset(root=opt.trainRoot)
 assert train_dataset
-if not opt.random_sample:
+if opt.random_sample:
     sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
 else:
     sampler = None
+
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.batchSize,
-    shuffle=True, sampler=None,
+    shuffle=True, sampler=sampler,
     num_workers=int(opt.workers),
     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
 
