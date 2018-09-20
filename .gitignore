@@ -5,3 +5,8 @@
 *.log
 *.tmp
 
+crnn.pytorch.iml
+misc.xml
+modules.xml
+vcs.xml
+workspace.xml

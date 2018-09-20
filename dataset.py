@@ -29,7 +29,7 @@ class lmdbDataset(Dataset):
             sys.exit(0)
 
         with self.env.begin(write=False) as txn:
-            nSamples = int(txn.get('num-samples'))
+            nSamples = int(txn.get('num-samples'.encode()))
             self.nSamples = nSamples
 
         self.transform = transform
@@ -43,7 +43,7 @@ class lmdbDataset(Dataset):
         index += 1
         with self.env.begin(write=False) as txn:
             img_key = 'image-%09d' % index
-            imgbuf = txn.get(img_key)
+            imgbuf = txn.get(img_key.encode())
 
             buf = six.BytesIO()
             buf.write(imgbuf)
@@ -58,8 +58,8 @@ class lmdbDataset(Dataset):
                 img = self.transform(img)
 
             label_key = 'label-%09d' % index
-            label = str(txn.get(label_key))
-
+            label = txn.get(label_key.encode())
+            label = label.decode()
             if self.target_transform is not None:
                 label = self.target_transform(label)
 
@@ -92,12 +92,12 @@ class randomSequentialSampler(sampler.Sampler):
         index = torch.LongTensor(len(self)).fill_(0)
         for i in range(n_batch):
             random_start = random.randint(0, len(self) - self.batch_size)
-            batch_index = random_start + torch.range(0, self.batch_size - 1)
+            batch_index = random_start + torch.arange(0, self.batch_size - 1)
             index[i * self.batch_size:(i + 1) * self.batch_size] = batch_index
         # deal with tail
         if tail:
             random_start = random.randint(0, len(self) - self.batch_size)
-            tail_index = random_start + torch.range(0, tail - 1)
+            tail_index = random_start + torch.arange(0, tail - 1)
             index[(i + 1) * self.batch_size:] = tail_index
 
         return iter(index)

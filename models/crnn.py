@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class BidirectionalLSTM(nn.Module):
 
@@ -77,3 +77,4 @@ class CRNN(nn.Module):
         output = self.rnn(conv)
 
         return output
+        # return F.softmax(output, dim=2)

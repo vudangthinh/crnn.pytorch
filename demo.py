@@ -1,3 +1,4 @@
+import argparse
 import torch
 from torch.autograd import Variable
 import utils
@@ -6,12 +7,19 @@ from PIL import Image
 
 import models.crnn as crnn
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', required=True, help='path to pretrain model')
+parser.add_argument('--image', required=True, help='path to image file')
+opt = parser.parse_args()
 
-model_path = './data/crnn.pth'
-img_path = './data/demo.png'
+model_path = opt.model
+img_path = opt.image
 alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
 
-model = crnn.CRNN(32, 1, 37, 256)
+with open('./data/vocabulary.txt', 'r') as voca_file:
+    alphabet = voca_file.readline()
+
+model = crnn.CRNN(32, 1, len(alphabet) + 1, 256)
 if torch.cuda.is_available():
     model = model.cuda()
 print('loading pretrained model from %s' % model_path)
@@ -19,7 +27,7 @@ model.load_state_dict(torch.load(model_path))
 
 converter = utils.strLabelConverter(alphabet)
 
-transformer = dataset.resizeNormalize((100, 32))
+transformer = dataset.resizeNormalize((576, 32))
 image = Image.open(img_path).convert('L')
 image = transformer(image)
 if torch.cuda.is_available():
