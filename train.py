@@ -17,8 +17,8 @@ import dataset
 import models.crnn as crnn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--trainRoot', required=True, default='./data', help='path to dataset')
-parser.add_argument('--valRoot', required=True, default='./data', help='path to dataset')
+parser.add_argument('--trainRoot', default='./data', help='path to dataset')
+parser.add_argument('--valRoot', default='./data', help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
@@ -132,19 +132,17 @@ def val(net, dataset, criterion, max_iter=100):
     for p in crnn.parameters():
         p.requires_grad = False
 
-    net.eval()
+    crnn.eval()
     data_loader = torch.utils.data.DataLoader(
         dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
     val_iter = iter(data_loader)
 
-    i = 0
     n_correct = 0
     loss_avg = utils.averager()
 
     max_iter = min(max_iter, len(data_loader))
     for i in range(max_iter):
         data = val_iter.next()
-        i += 1
         cpu_images, cpu_texts = data
         batch_size = cpu_images.size(0)
         utils.loadData(image, cpu_images)
@@ -158,7 +156,7 @@ def val(net, dataset, criterion, max_iter=100):
         loss_avg.add(cost)
 
         _, preds = preds.max(2)
-        preds = preds.squeeze(2)
+        # preds = preds.squeeze(2)
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
         for pred, target in zip(sim_preds, cpu_texts):
@@ -208,8 +206,8 @@ for epoch in range(opt.nepoch):
                   (epoch, opt.nepoch, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
-        # if i % opt.valInterval == 0:
-        #     val(crnn, test_dataset, criterion)
+        if i % opt.valInterval == 0:
+            val(crnn, test_dataset, criterion)
 
         # do checkpointing
         if i % opt.saveInterval == 0:
