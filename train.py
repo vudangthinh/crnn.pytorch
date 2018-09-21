@@ -13,6 +13,7 @@ from warpctc_pytorch import CTCLoss
 import os
 import utils
 import dataset
+from torch.utils.data.sampler import SubsetRandomSampler
 
 import models.crnn as crnn
 
@@ -41,6 +42,8 @@ parser.add_argument('--adadelta', action='store_true', help='Whether to use adad
 parser.add_argument('--keep_ratio', action='store_true', help='whether to keep ratio for image resize')
 parser.add_argument('--manualSeed', type=int, default=1234, help='reproduce experiemnt')
 parser.add_argument('--random_sample', action='store_true', help='whether to sample the dataset with random sampler')
+parser.add_argument('--valid_result', action='store_true', help='whether to valid result')
+
 opt = parser.parse_args()
 with open('./data/vocabulary.txt', 'r') as voca_file:
     opt.alphabet = voca_file.readline()
@@ -61,14 +64,24 @@ if torch.cuda.is_available():
 
 train_dataset = dataset.lmdbDataset(root=opt.trainRoot)
 assert train_dataset
-if opt.random_sample:
-    sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-else:
-    sampler = None
+
+dataset_size = len(train_dataset)
+indices = list(range(dataset_size))
+split = 200
+train_idx, valid_idx = indices[split:], indices[:split]
+
+train_sampler = SubsetRandomSampler(train_idx)
+valid_sampler = SubsetRandomSampler(valid_idx)
 
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.batchSize,
-    shuffle=True, sampler=sampler,
+    shuffle=False, sampler=train_sampler,
+    num_workers=int(opt.workers),
+    collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
+
+valid_loader = torch.utils.data.DataLoader(
+    train_dataset, batch_size=opt.batchSize,
+    shuffle=False, sampler=valid_sampler,
     num_workers=int(opt.workers),
     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
 
@@ -133,14 +146,14 @@ def val(net, dataset, criterion, max_iter=100):
         p.requires_grad = False
 
     crnn.eval()
-    data_loader = torch.utils.data.DataLoader(
-        dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-    val_iter = iter(data_loader)
+    # data_loader = torch.utils.data.DataLoader(
+    #     dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+    val_iter = iter(valid_loader)
 
     n_correct = 0
     loss_avg = utils.averager()
 
-    max_iter = min(max_iter, len(data_loader))
+    max_iter = min(max_iter, len(valid_loader))
     for i in range(max_iter):
         data = val_iter.next()
         cpu_images, cpu_texts = data
@@ -206,7 +219,7 @@ for epoch in range(opt.nepoch):
                   (epoch, opt.nepoch, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
-        if i % opt.valInterval == 0:
+        if opt.valid_result and i % opt.valInterval == 0:
             val(crnn, test_dataset, criterion)
 
         # do checkpointing

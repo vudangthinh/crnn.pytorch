@@ -56,7 +56,7 @@ def createDataset(outputPath, imagePathList, labelList, lexiconList=None, checkV
         if not os.path.exists(imagePath):
             print('%s does not exist' % imagePath)
             continue
-        with open(imagePath, 'r') as f:
+        with open(imagePath, 'rb') as f:
             imageBin = f.read()
         if checkValid:
             if not checkImageIsValid(imageBin):
@@ -76,7 +76,7 @@ def createDataset(outputPath, imagePathList, labelList, lexiconList=None, checkV
             print('Written %d / %d' % (cnt, nSamples))
         cnt += 1
     nSamples = cnt-1
-    cache['num-samples'] = str(nSamples)
+    cache['num-samples'] = str(nSamples).encode('utf-8')
     writeCache(env, cache)
     print('Created dataset with %d samples' % nSamples)
 
@@ -94,6 +94,21 @@ if __name__ == '__main__':
 
         imagePathList.append(image_path)
         labelList.append(label)
+
+    img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
+    label_file_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/lines.txt'
+    with open(label_file_2, 'r') as file:
+        for line in file:
+            if not line.startswith('#'):
+                line_arr = line.strip().split(' ')
+                img_name = line_arr[0]
+                img_name_parts = img_name.split('-')
+                img_path = os.path.join(img_dir_2, img_name_parts[0],
+                                        img_name_parts[0] + '-' + img_name_parts[1], img_name + '.png')
+                if os.path.isfile(img_path):
+                    imagePathList.append(img_path)
+                    text = line_arr[8].replace('|', ' ')
+                    labelList.append(text)
 
     # print(imagePathList)
     # print(labelList)

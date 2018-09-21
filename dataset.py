@@ -29,7 +29,7 @@ class lmdbDataset(Dataset):
             sys.exit(0)
 
         with self.env.begin(write=False) as txn:
-            nSamples = int(txn.get('num-samples'.encode()))
+            nSamples = int(txn.get('num-samples'.encode()).decode())
             self.nSamples = nSamples
 
         self.transform = transform
