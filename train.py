@@ -85,9 +85,6 @@ valid_loader = torch.utils.data.DataLoader(
     num_workers=int(opt.workers),
     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
 
-test_dataset = dataset.lmdbDataset(
-    root=opt.valRoot, transform=dataset.resizeNormalize((opt.imgW, opt.imgH)))
-
 nclass = len(opt.alphabet) + 1
 num_channels = 1
 
@@ -139,15 +136,13 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(net, dataset, criterion, max_iter=100):
+def val(net, criterion, max_iter=100):
     print('Start val')
 
     for p in crnn.parameters():
         p.requires_grad = False
 
     crnn.eval()
-    # data_loader = torch.utils.data.DataLoader(
-    #     dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
     val_iter = iter(valid_loader)
 
     n_correct = 0
@@ -220,7 +215,7 @@ for epoch in range(opt.nepoch):
             loss_avg.reset()
 
         if opt.valid_result and i % opt.valInterval == 0:
-            val(crnn, test_dataset, criterion)
+            val(crnn, criterion)
 
         # do checkpointing
         if i % opt.saveInterval == 0:
