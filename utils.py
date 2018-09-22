@@ -19,7 +19,7 @@ class strLabelConverter(object):
         ignore_case (bool, default=True): whether or not to ignore all of the case.
     """
 
-    def __init__(self, alphabet, ignore_case=True):
+    def __init__(self, alphabet, ignore_case=False):
         self._ignore_case = ignore_case
         if self._ignore_case:
             alphabet = alphabet.lower()
@@ -149,10 +149,12 @@ def assureRatio(img):
         img = main(img)
     return img
 
-def cer_loss(sim_preds, labels):
+def cer_loss(sim_preds, labels, ignore_case=False):
     total_loss = 0
     for i in range(len(sim_preds)):
         pred = sim_preds[i]
+        if ignore_case:
+            pred = pred.title()
         text = labels[i]
         loss = Levenshtein.distance(pred, text) * 1.0 / max(len(pred), len(text))
         total_loss += loss

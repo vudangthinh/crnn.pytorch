@@ -1,0 +1,19 @@
+Image size: 32x576
+Batch size: 64
+Epoch: 25
+Test loss: 23.945019, accuray: 0.085938
+[24/25][210/234] Loss: 1.764242
+[24/25][220/234] Loss: 1.845959
+[24/25][230/234] Loss: 2.460883
+CER Loss: 0.019984759815475164
+
+Not lower case
+Test loss: 20.222534, accuray: 0.066406
+[24/25][210/234] Loss: 1.823382
+[24/25][220/234] Loss: 2.171127
+[24/25][230/234] Loss: 2.474072
+CER Loss: 0.013039713909279126
+
+
+Train with ignore-case then title text to get loss
+CER Loss: 0.015569590656776317

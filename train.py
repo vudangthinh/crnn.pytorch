@@ -88,7 +88,7 @@ valid_loader = torch.utils.data.DataLoader(
 nclass = len(opt.alphabet) + 1
 num_channels = 1
 
-converter = utils.strLabelConverter(opt.alphabet)
+converter = utils.strLabelConverter(opt.alphabet, ignore_case=False)
 criterion = CTCLoss()
 
 
@@ -192,7 +192,7 @@ def test(test_loader):
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
 
-        total_loss = utils.cer_loss(sim_preds, cpu_texts)
+        total_loss = utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
 
     print('CER Loss:', total_loss * 1.0 / test_size)
 
