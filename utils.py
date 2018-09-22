@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import collections
+import Levenshtein
 
 
 class strLabelConverter(object):
@@ -147,3 +148,13 @@ def assureRatio(img):
         main = nn.UpsamplingBilinear2d(size=(h, h), scale_factor=None)
         img = main(img)
     return img
+
+def cer_loss(sim_preds, labels):
+    total_loss = 0
+    for i in range(len(sim_preds)):
+        pred = sim_preds[i]
+        text = labels[i]
+        loss = Levenshtein.distance(pred, text) * 1.0 / max(len(pred), len(text))
+        total_loss += loss
+
+    return total_loss

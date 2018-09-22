@@ -33,7 +33,7 @@ parser.add_argument('--alphabet', type=str, default='0123456789abcdefghijklmnopq
 parser.add_argument('--expr_dir', default='expr', help='Where to store samples and models')
 parser.add_argument('--displayInterval', type=int, default=10, help='Interval to be displayed')
 parser.add_argument('--n_test_disp', type=int, default=10, help='Number of samples to display when test')
-parser.add_argument('--valInterval', type=int, default=10, help='Interval to be displayed')
+parser.add_argument('--valInterval', type=int, default=200, help='Interval to be displayed')
 parser.add_argument('--saveInterval', type=int, default=100, help='Interval to be displayed')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate for Critic, not used by adadealta')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
@@ -179,6 +179,23 @@ def val(net, criterion, max_iter=100):
     print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
 
 
+def test(test_loader):
+    test_size = 0
+    for i_batch, (cpu_images, cpu_texts) in enumerate(test_loader):
+        utils.loadData(image, cpu_images)
+        batch_size = cpu_images.size(0)
+        test_size += batch_size
+        preds = crnn(image)
+        preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+
+        _, preds = preds.max(2)
+        preds = preds.transpose(1, 0).contiguous().view(-1)
+        sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+
+        total_loss = utils.cer_loss(sim_preds, cpu_texts)
+
+    print('CER Loss:', total_loss * 1.0 / test_size)
+
 def trainBatch(net, criterion, optimizer):
     data = train_iter.next()
     cpu_images, cpu_texts = data
@@ -221,3 +238,7 @@ for epoch in range(opt.nepoch):
         if i % opt.saveInterval == 0:
             torch.save(
                 crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.expr_dir, epoch, i))
+
+torch.save(crnn.state_dict(), '{0}/netCRNN_final.pth'.format(opt.expr_dir))
+
+test(valid_loader)
