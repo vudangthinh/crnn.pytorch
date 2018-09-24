@@ -179,9 +179,17 @@ def val(net, criterion, max_iter=100):
     print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
 
 
-def test(test_loader):
+def test(test_loader, max_iter=10):
     test_size = 0
-    for i_batch, (cpu_images, cpu_texts) in enumerate(test_loader):
+    total_loss = 0
+
+    test_iter = iter(test_loader)
+    max_iter = min(max_iter, len(test_loader))
+
+    for i in range(max_iter):
+        data = test_iter.next()
+        cpu_images, cpu_texts = data
+
         utils.loadData(image, cpu_images)
         batch_size = cpu_images.size(0)
         test_size += batch_size
@@ -192,9 +200,9 @@ def test(test_loader):
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
 
-        total_loss = utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
+        total_loss += utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
 
-    print('CER Loss:', total_loss * 1.0 / test_size)
+    return total_loss * 1.0 / test_size
 
 def trainBatch(net, criterion, optimizer):
     data = train_iter.next()
@@ -239,6 +247,13 @@ for epoch in range(opt.nepoch):
             torch.save(
                 crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.expr_dir, epoch, i))
 
+    train_cer = test(train_loader)
+    print('CER Train Loss:', train_cer)
+    test_cer = test(valid_loader)
+    print('CER Test Loss:', test_cer)
+
+
 torch.save(crnn.state_dict(), '{0}/netCRNN_final.pth'.format(opt.expr_dir))
 
-test(valid_loader)
+test_cer = test(valid_loader)
+print('Final CER Test Loss:', test_cer)
