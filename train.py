@@ -219,18 +219,27 @@ def trainBatch(net, criterion, optimizer):
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
-    return cost
+
+    _, preds = preds.max(2)
+    preds = preds.transpose(1, 0).contiguous().view(-1)
+    sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+
+    cer_loss = utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
+    return cost, cer_loss
 
 
 for epoch in range(opt.nepoch):
     train_iter = iter(train_loader)
     i = 0
+
+    train_cer = 0
     while i < len(train_loader):
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
 
-        cost = trainBatch(crnn, criterion, optimizer)
+        cost, cer_loss = trainBatch(crnn, criterion, optimizer)
+        train_cer += cer_loss
         loss_avg.add(cost)
         i += 1
 
@@ -242,13 +251,10 @@ for epoch in range(opt.nepoch):
         if opt.valid_result and i % opt.valInterval == 0:
             val(crnn, criterion)
 
-        # do checkpointing
-        if i % opt.saveInterval == 0:
-            torch.save(
-                crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.expr_dir, epoch, i))
+    torch.save(
+        crnn.state_dict(), '{0}/netCRNN_{1}.pth'.format(opt.expr_dir, epoch))
 
-    train_cer = test(train_loader)
-    print('CER Train Loss:', train_cer)
+    print('CER Train Loss:', train_cer * 1.0 / len(train_idx))
     test_cer = test(valid_loader)
     print('CER Test Loss:', test_cer)
 
