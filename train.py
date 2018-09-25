@@ -14,6 +14,7 @@ import os
 import utils
 import dataset
 from torch.utils.data.sampler import SubsetRandomSampler
+from tensorboardX import SummaryWriter
 
 import models.crnn as crnn
 
@@ -90,7 +91,7 @@ num_channels = 1
 
 converter = utils.strLabelConverter(opt.alphabet, ignore_case=False)
 criterion = CTCLoss()
-
+writer = SummaryWriter()
 
 # custom weights initialization called on crnn
 def weights_init(m):
@@ -258,7 +259,10 @@ for epoch in range(opt.nepoch):
     test_cer = test(valid_loader)
     print('CER Test Loss:', test_cer)
 
+    writer.add_scalars("loss", {'train': train_cer * 1.0 / len(train_idx),
+                               'test': test_cer}, epoch)
 
+writer.close()
 torch.save(crnn.state_dict(), '{0}/netCRNN_final.pth'.format(opt.expr_dir))
 
 test_cer = test(valid_loader)

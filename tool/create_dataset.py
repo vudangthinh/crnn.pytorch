@@ -82,19 +82,23 @@ def createDataset(outputPath, imagePathList, labelList, lexiconList=None, checkV
 
 
 if __name__ == '__main__':
-    label_file = os.path.join(dataset_dir, 'labels.json')
-
-    with open(label_file, 'r') as file:
-        json_data = json.load(file)
     imagePathList = []
     labelList = []
-    for key, value in json_data.items():
-        image_path = os.path.join(dataset_dir, key)
-        label = value
 
-        imagePathList.append(image_path)
-        labelList.append(label)
+    # Create cinnamon data
+    # label_file = os.path.join(dataset_dir, 'labels.json')
+    #
+    # with open(label_file, 'r') as file:
+    #     json_data = json.load(file)
+    #
+    # for key, value in json_data.items():
+    #     image_path = os.path.join(dataset_dir, key)
+    #     label = value
+    #
+    #     imagePathList.append(image_path)
+    #     labelList.append(label)
 
+    # Create IAM data
     img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
     label_file_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/lines.txt'
     with open(label_file_2, 'r') as file:
