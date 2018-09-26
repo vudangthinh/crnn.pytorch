@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import collections
 import Levenshtein
+import ctcdecode
 
 
 class strLabelConverter(object):
@@ -19,7 +20,7 @@ class strLabelConverter(object):
         ignore_case (bool, default=True): whether or not to ignore all of the case.
     """
 
-    def __init__(self, alphabet, ignore_case=False):
+    def __init__(self, alphabet, ignore_case=False, beam_size=20):
         self._ignore_case = ignore_case
         if self._ignore_case:
             alphabet = alphabet.lower()
@@ -29,6 +30,8 @@ class strLabelConverter(object):
         for i, char in enumerate(alphabet):
             # NOTE: 0 is reserved for 'blank' required by wrap_ctc
             self.dict[char] = i + 1
+
+        self.beam_size = beam_size
 
     def encode(self, text):
         """Support batch or single str.
@@ -89,6 +92,14 @@ class strLabelConverter(object):
                 index += l
             return texts
 
+    def beam_decode(self, preds):
+        decoder = ctcdecode.CTCBeamDecoder(self.alphabet, beam_width=self.beam_size, blank_id=0)
+        beam_results, beam_scores, timesteps, out_seq_len = decoder.decode(preds)
+
+
+
+    def beam_to_string(self, tokens, vocab, seq_len):
+        return ''.join([vocab[x] for x in tokens[0:seq_len]])
 
 class averager(object):
     """Compute average for `torch.Variable` and `torch.Tensor`. """
