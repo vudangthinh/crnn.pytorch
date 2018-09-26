@@ -6,6 +6,8 @@ import dataset
 from PIL import Image
 
 import models.crnn as crnn
+from tool.BeamSearch import ctcBeamSearch
+import torch.nn.functional as F
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=True, help='path to pretrain model')
@@ -37,6 +39,14 @@ image = Variable(image)
 
 model.eval()
 preds = model(image)
+
+# preds_soft = F.softmax(preds, dim=2)
+# print("alphabet:", len(alphabet))
+# print(preds_soft.shape)
+# preds_beam = preds_soft.squeeze()
+# print(preds_beam.shape)
+# beam_pred = ctcBeamSearch(preds_beam, alphabet, None)
+# print('Beam Pred:', beam_pred)
 
 _, preds = preds.max(2)
 preds = preds.transpose(1, 0).contiguous().view(-1)

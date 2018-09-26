@@ -7,6 +7,7 @@ from torch.autograd import Variable
 import collections
 import Levenshtein
 import ctcdecode
+import torch.nn.functional as F
 
 
 class strLabelConverter(object):
@@ -93,10 +94,19 @@ class strLabelConverter(object):
             return texts
 
     def beam_decode(self, preds):
-        decoder = ctcdecode.CTCBeamDecoder(self.alphabet, beam_width=self.beam_size, blank_id=0)
+        preds = preds.transpose(0, 1)
+        preds = F.softmax(preds, dim=2)
+        batch_size = preds.size(0)
+        decoder = ctcdecode.CTCBeamDecoder(self.alphabet, beam_width=self.beam_size, blank_id=self.alphabet.index('-'), num_processes=24)
         beam_results, beam_scores, timesteps, out_seq_len = decoder.decode(preds)
 
+        texts = []
+        for i in range(batch_size):
+            output_str = self.beam_to_string(beam_results[i][0], self.alphabet, out_seq_len[i][0])
+            texts.append(output_str)
 
+        # print(texts)
+        return texts
 
     def beam_to_string(self, tokens, vocab, seq_len):
         return ''.join([vocab[x] for x in tokens[0:seq_len]])

@@ -201,6 +201,8 @@ def test(test_loader, max_iter=10):
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
 
+        # sim_preds = converter.beam_decode(preds.data)
+
         total_loss += utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
 
     return total_loss * 1.0 / test_size
@@ -224,6 +226,8 @@ def trainBatch(net, criterion, optimizer):
     _, preds = preds.max(2)
     preds = preds.transpose(1, 0).contiguous().view(-1)
     sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+
+    # sim_preds = converter.beam_decode(preds.data)
 
     cer_loss = utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
     return cost, cer_loss
