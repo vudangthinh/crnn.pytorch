@@ -61,7 +61,7 @@ cudnn.benchmark = True
 
 if torch.cuda.is_available():
     torch.cuda.set_device(opt.gpu)
-    print('device: ', torch.cuda.current_device())
+    print('device:', torch.cuda.current_device())
 
 train_dataset = dataset.lmdbDataset(root=opt.trainRoot)
 assert train_dataset

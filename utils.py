@@ -170,14 +170,20 @@ def assureRatio(img):
         img = main(img)
     return img
 
+def cer_loss_one_image(sim_pred, label, ignore_case=False):
+    if ignore_case:
+        sim_pred = sim_pred.title()
+
+    loss = Levenshtein.distance(sim_pred, label) * 1.0 / max(len(sim_pred), len(label))
+    return loss
+
 def cer_loss(sim_preds, labels, ignore_case=False):
     total_loss = 0
     for i in range(len(sim_preds)):
         pred = sim_preds[i]
-        if ignore_case:
-            pred = pred.title()
         text = labels[i]
-        loss = Levenshtein.distance(pred, text) * 1.0 / max(len(pred), len(text))
+
+        loss = cer_loss_one_image(pred, text, ignore_case)
         total_loss += loss
 
     return total_loss

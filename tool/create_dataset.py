@@ -7,14 +7,17 @@ import argparse
 import json
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', required=True, help='path to dataset')
+parser.add_argument('--image_dir', required=True, help='path to dataset')
+parser.add_argument('--label', required=True, help='path to label file')
 parser.add_argument('--output', required=True, help='path to output lmdb')
 
 opt = parser.parse_args()
-dataset_dir = opt.dataset
+image_dir = opt.image_dir
+label_file = opt.label
 output_dir = opt.output
 
-print('dataset_dir', dataset_dir)
+print('image_dir', image_dir)
+print('label file', label_file)
 print('output_dir', output_dir)
 
 def checkImageIsValid(imageBin):
@@ -86,33 +89,41 @@ if __name__ == '__main__':
     labelList = []
 
     # Create cinnamon data
-    # label_file = os.path.join(dataset_dir, 'labels.json')
-    #
-    # with open(label_file, 'r') as file:
-    #     json_data = json.load(file)
-    #
-    # for key, value in json_data.items():
-    #     image_path = os.path.join(dataset_dir, key)
-    #     label = value
-    #
-    #     imagePathList.append(image_path)
-    #     labelList.append(label)
+
+    with open(label_file, 'r') as file:
+        json_data = json.load(file)
+
+    for key, value in json_data.items():
+        img_name = key.split('.')[0]
+        image_path = os.path.join(image_dir, key)
+        label = value
+
+        imagePathList.append(os.path.join(image_dir, img_name + '_gray.png'))
+        imagePathList.append(os.path.join(image_dir, img_name + '_thread_0.png'))
+        imagePathList.append(os.path.join(image_dir, img_name + '_thread_10.png'))
+        imagePathList.append(os.path.join(image_dir, img_name + '_thread_20.png'))
+        imagePathList.append(os.path.join(image_dir, img_name + '_thread_30.png'))
+        labelList.append(label)
+        labelList.append(label)
+        labelList.append(label)
+        labelList.append(label)
+        labelList.append(label)
 
     # Create IAM data
-    img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
-    label_file_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/lines.txt'
-    with open(label_file_2, 'r') as file:
-        for line in file:
-            if not line.startswith('#'):
-                line_arr = line.strip().split(' ')
-                img_name = line_arr[0]
-                img_name_parts = img_name.split('-')
-                img_path = os.path.join(img_dir_2, img_name_parts[0],
-                                        img_name_parts[0] + '-' + img_name_parts[1], img_name + '.png')
-                if os.path.isfile(img_path):
-                    imagePathList.append(img_path)
-                    text = line_arr[8].replace('|', ' ')
-                    labelList.append(text)
+    # img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
+    # label_file_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/lines.txt'
+    # with open(label_file_2, 'r') as file:
+    #     for line in file:
+    #         if not line.startswith('#'):
+    #             line_arr = line.strip().split(' ')
+    #             img_name = line_arr[0]
+    #             img_name_parts = img_name.split('-')
+    #             img_path = os.path.join(img_dir_2, img_name_parts[0],
+    #                                     img_name_parts[0] + '-' + img_name_parts[1], img_name + '.png')
+    #             if os.path.isfile(img_path):
+    #                 imagePathList.append(img_path)
+    #                 text = line_arr[8].replace('|', ' ')
+    #                 labelList.append(text)
 
     # print(imagePathList)
     # print(labelList)
