@@ -98,16 +98,16 @@ if __name__ == '__main__':
         image_path = os.path.join(image_dir, key)
         label = value
 
-        imagePathList.append(os.path.join(image_dir, img_name + '_gray.png'))
-        imagePathList.append(os.path.join(image_dir, img_name + '_thread_0.png'))
-        imagePathList.append(os.path.join(image_dir, img_name + '_thread_10.png'))
-        imagePathList.append(os.path.join(image_dir, img_name + '_thread_20.png'))
-        imagePathList.append(os.path.join(image_dir, img_name + '_thread_30.png'))
+        # imagePathList.append(os.path.join(image_dir, img_name + '_gray.png'))
+        # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_0.png'))
+        # imagePathList.append(os.path.join(image_dir, img_name + '_thread_10.png'))
+        imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_20.png'))
+        # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_otsu.png'))
+        # labelList.append(label)
+        # labelList.append(label)
+        # labelList.append(label)
         labelList.append(label)
-        labelList.append(label)
-        labelList.append(label)
-        labelList.append(label)
-        labelList.append(label)
+        # labelList.append(label)
 
     # Create IAM data
     # img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
