@@ -182,30 +182,34 @@ def val(net, criterion, max_iter=100):
 
 def test(test_loader, max_iter=10):
     test_size = 0
-    total_loss = 0
+    total_cer_loss = 0
+    total_ctc_loss = 0
 
     test_iter = iter(test_loader)
     max_iter = min(max_iter, len(test_loader))
 
-    for i in range(max_iter):
-        data = test_iter.next()
-        cpu_images, cpu_texts = data
+    crnn.eval()
+    with torch.no_grad():
+        for i in range(max_iter):
+            data = test_iter.next()
+            cpu_images, cpu_texts = data
 
-        utils.loadData(image, cpu_images)
-        batch_size = cpu_images.size(0)
-        test_size += batch_size
-        preds = crnn(image)
-        preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+            utils.loadData(image, cpu_images)
+            batch_size = cpu_images.size(0)
+            test_size += batch_size
+            preds = crnn(image)
+            preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+            total_ctc_loss += criterion(preds, text, preds_size, length)
 
-        _, preds = preds.max(2)
-        preds = preds.transpose(1, 0).contiguous().view(-1)
-        sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+            _, preds = preds.max(2)
+            preds = preds.transpose(1, 0).contiguous().view(-1)
+            sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
 
-        # sim_preds = converter.beam_decode(preds.data)
+            # sim_preds = converter.beam_decode(preds.data)
 
-        total_loss += utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
+            total_cer_loss += utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
 
-    return total_loss * 1.0 / test_size
+    return total_ctc_loss * 1.0 / test_size, total_cer_loss * 1.0 / test_size
 
 def trainBatch(net, criterion, optimizer):
     data = train_iter.next()
@@ -230,21 +234,23 @@ def trainBatch(net, criterion, optimizer):
     # sim_preds = converter.beam_decode(preds.data)
 
     cer_loss = utils.cer_loss(sim_preds, cpu_texts, ignore_case=False)
-    return cost, cer_loss
+    return cost, cer_loss, batch_size
 
 
 for epoch in range(opt.nepoch):
     train_iter = iter(train_loader)
     i = 0
 
+    train_ctc = 0
     train_cer = 0
     while i < len(train_loader):
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
 
-        cost, cer_loss = trainBatch(crnn, criterion, optimizer)
+        cost, cer_loss, batch_size = trainBatch(crnn, criterion, optimizer)
         train_cer += cer_loss
+        train_ctc += cost * batch_size
         loss_avg.add(cost)
         i += 1
 
@@ -259,15 +265,22 @@ for epoch in range(opt.nepoch):
     torch.save(
         crnn.state_dict(), '{0}/netCRNN_{1}.pth'.format(opt.expr_dir, epoch))
 
+    test_ctc, test_cer = test(valid_loader)
+
+    print('CTC Train Loss:', train_ctc * 1.0 / len(train_idx))
+    print('CTC Test Loss:', test_ctc)
+
     print('CER Train Loss:', train_cer * 1.0 / len(train_idx))
-    test_cer = test(valid_loader)
     print('CER Test Loss:', test_cer)
 
-    writer.add_scalars("loss", {'train': train_cer * 1.0 / len(train_idx),
-                               'test': test_cer}, epoch)
+    writer.add_scalars("loss.ctc", {'train': train_ctc * 1.0 / len(train_idx),
+                               'test': test_ctc}, epoch)
+    writer.add_scalars("loss.cer", {'train': train_cer * 1.0 / len(train_idx),
+                                    'test': test_cer}, epoch)
 
 writer.close()
 torch.save(crnn.state_dict(), '{0}/netCRNN_final.pth'.format(opt.expr_dir))
 
-test_cer = test(valid_loader)
+test_ctc, test_cer = test(valid_loader)
+print('Final CTC Test Loss:', test_ctc)
 print('Final CER Test Loss:', test_cer)

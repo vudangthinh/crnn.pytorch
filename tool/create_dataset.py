@@ -5,11 +5,12 @@ import cv2
 import numpy as np
 import argparse
 import json
+import cv2
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--image_dir', required=True, help='path to dataset')
-parser.add_argument('--label', required=True, help='path to label file')
-parser.add_argument('--output', required=True, help='path to output lmdb')
+parser.add_argument('--image_dir', help='path to dataset')
+parser.add_argument('--label', help='path to label file')
+parser.add_argument('--output', help='path to output lmdb')
 
 opt = parser.parse_args()
 image_dir = opt.image_dir
@@ -89,41 +90,51 @@ if __name__ == '__main__':
     labelList = []
 
     # Create cinnamon data
-
-    with open(label_file, 'r') as file:
-        json_data = json.load(file)
-
-    for key, value in json_data.items():
-        img_name = key.split('.')[0]
-        image_path = os.path.join(image_dir, key)
-        label = value
-
-        # imagePathList.append(os.path.join(image_dir, img_name + '_gray.png'))
-        # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_0.png'))
-        # imagePathList.append(os.path.join(image_dir, img_name + '_thread_10.png'))
-        imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_20.png'))
-        # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_otsu.png'))
-        # labelList.append(label)
-        # labelList.append(label)
-        # labelList.append(label)
-        labelList.append(label)
-        # labelList.append(label)
+    # with open(label_file, 'r') as file:
+    #     json_data = json.load(file)
+    #
+    # for key, value in json_data.items():
+    #     img_name = key.split('.')[0]
+    #     image_path = os.path.join(image_dir, key)
+    #     label = value
+    #
+    #     # imagePathList.append(os.path.join(image_dir, img_name + '_gray.png'))
+    #     # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_0.png'))
+    #     # imagePathList.append(os.path.join(image_dir, img_name + '_thread_10.png'))
+    #     imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_20.png'))
+    #     # imagePathList.append(os.path.join(image_dir, img_name + '_crop_thread_otsu.png'))
+    #     # labelList.append(label)
+    #     # labelList.append(label)
+    #     # labelList.append(label)
+    #     labelList.append(label)
+    #     # labelList.append(label)
 
     # Create IAM data
-    # img_dir_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/lines'
-    # label_file_2 = '/Users/vng/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/lines.txt'
-    # with open(label_file_2, 'r') as file:
-    #     for line in file:
-    #         if not line.startswith('#'):
-    #             line_arr = line.strip().split(' ')
-    #             img_name = line_arr[0]
-    #             img_name_parts = img_name.split('-')
-    #             img_path = os.path.join(img_dir_2, img_name_parts[0],
-    #                                     img_name_parts[0] + '-' + img_name_parts[1], img_name + '.png')
-    #             if os.path.isfile(img_path):
-    #                 imagePathList.append(img_path)
-    #                 text = line_arr[8].replace('|', ' ')
-    #                 labelList.append(text)
+    img_dir_2 = '/Users/thinhvu/PycharmProjects/ocr_data/IAM_Handwriting_DB/sentences'
+    label_file_2 = '/Users/thinhvu/PycharmProjects/ocr_data/IAM_Handwriting_DB/ascii/sentences.txt'
+    with open(label_file_2, 'r') as file:
+        for line in file:
+            if not line.startswith('#'):
+                line_arr = line.strip().split(' ')
+                if line_arr[2] == 'ok':
+                    graylevel = int(line_arr[3])
+
+                    img_name = line_arr[0]
+                    img_name_parts = img_name.split('-')
+                    img_path = os.path.join(img_dir_2, img_name_parts[0],
+                                            img_name_parts[0] + '-' + img_name_parts[1], img_name + '_binary.png')
+
+                    # save_img_path = os.path.join(img_dir_2, img_name_parts[0],
+                    #                         img_name_parts[0] + '-' + img_name_parts[1], img_name + '_binary.png')
+                    #
+                    # img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+                    # img = cv2.threshold(img, graylevel, 255, cv2.THRESH_BINARY)[1]
+                    # cv2.imwrite(save_img_path, img)
+
+                    if os.path.isfile(img_path):
+                        imagePathList.append(img_path)
+                        text = line_arr[-1].replace('|', ' ')
+                        labelList.append(text)
 
     # print(imagePathList)
     # print(labelList)

@@ -46,12 +46,14 @@ class CRNN(nn.Module):
             else:
                 cnn.add_module('relu{0}'.format(i), nn.ReLU(True))
 
-        convRelu(0)
-        cnn.add_module('pooling{0}'.format(0), nn.MaxPool2d(2, 2))  # 64x16x64
+        convRelu(0) # 64x32x576
+        cnn.add_module('pooling{0}'.format(0), nn.MaxPool2d(2, 2))  # 64x16x288
         convRelu(1)
+        cnn.add_module('dropout{0}'.format(0), nn.Dropout2d(p=0.2))
         cnn.add_module('pooling{0}'.format(1), nn.MaxPool2d(2, 2))  # 128x8x32
         convRelu(2, True)
         convRelu(3)
+        cnn.add_module('dropout{0}'.format(1), nn.Dropout2d(p=0.2))
         cnn.add_module('pooling{0}'.format(2),
                        nn.MaxPool2d((2, 2), (2, 1), (0, 1)))  # 256x4x16
         convRelu(4, True)
